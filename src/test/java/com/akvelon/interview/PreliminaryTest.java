@@ -3,10 +3,7 @@ package com.akvelon.interview;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class PreliminaryTest {
 
@@ -99,6 +96,55 @@ public class PreliminaryTest {
         Assertions.assertEquals(1, testable.singleNumber(new int[] {2,2,1}));
         Assertions.assertEquals(4, testable.singleNumber(new int[] {4,1,2,1,2}));
         Assertions.assertEquals(1, testable.singleNumber(new int[] {1}));
+    }
+
+    @Test
+    public void searchInsert() {
+        int[] nums1 = {1, 3, 5, 6};
+        int target1 = 5;
+        int expectedIndex1 = 2;
+
+        int[] nums2 = {1, 3, 5, 6};
+        int target2 = 2;
+        int expectedIndex2 = 1;
+
+        int[] nums3 = {1, 3, 5, 6};
+        int target3 = 7;
+        int expectedIndex3 = 4;
+
+        int[] nums4 = {1, 3, 5, 6};
+        int target4 = 0;
+        int expectedIndex4 = 0;
+
+        int[] nums5 = {1};
+        int target5 = 0;
+        int expectedIndex5 = 0;
+
+        Assertions.assertEquals(expectedIndex1, testable.searchInsert(nums1, target1));
+        Assertions.assertEquals(expectedIndex2, testable.searchInsert(nums2, target2));
+        Assertions.assertEquals(expectedIndex3, testable.searchInsert(nums3, target3));
+        Assertions.assertEquals(expectedIndex4, testable.searchInsert(nums4, target4));
+        Assertions.assertEquals(expectedIndex5, testable.searchInsert(nums5, target5));
+    }
+
+    @Test
+    public void topKFrequent() {
+        Assertions.assertArrayEquals(new int[] {2,1}, testable.topKFrequent(new int[]{1,1,1,2,2,3}, 2));
+        Assertions.assertArrayEquals(new int[] {1}, testable.topKFrequent(new int[]{1}, 1));
+    }
+
+    @Test
+    public void sortSqueareArray() {
+        int[] aaa = {-6, -3, -1, 2, 4, 5};
+
+        Assertions.assertArrayEquals(new int[] {1, 4, 9, 16, 25, 36}, testable.sortSqueareArray(aaa));
+    }
+
+
+    @Test
+    public void checkBalance() {
+        Assertions.assertEquals("Balanced", testable.checkBalance("[()]{}{[()()]()}"));
+        Assertions.assertEquals("Not Balanced", testable.checkBalance("[(])"));
     }
 }
 
@@ -247,5 +293,136 @@ class PreliminarySolution {
         return result;
     }
 
+    public int searchInsert(int[] nums, int target) {
+        if (nums == null || nums.length == 0) throw new RuntimeException("Nums must be set");
+        if (nums.length == 1) return nums[0] >= target ? 0 : 1;
+        if (nums[nums.length - 1] < target) return nums.length;
+
+        int i = 0;
+        for (int j = 1; j < nums.length; j++) {
+            if (target <= nums[i]) return i;
+            if (target <= nums[j]) return j;
+            i++;
+        }
+        return i;
+    }
+
+    public int lengthOfLastWord(String s) {
+        if (s == null || s.isBlank()) return 0;
+
+        int counter = 0;
+
+        for (int i = s.length() - 1; i >= 0; i--) {
+            char ch = s.charAt(i);
+            if (ch == ' ' && counter == 0) {
+                continue;
+            }
+            if (ch == ' ') {
+                return counter;
+            }
+            counter++;
+        }
+
+        return counter;
+    }
+
+    public int[] topKFrequent(int[] nums, int k) {
+        final Map<Integer, Integer> store = new HashMap<>();
+
+        // O (N)
+        for (int num : nums) {
+            // O (1)
+            store.put(num, store.getOrDefault(num, 0) + 1);
+        }
+
+        final PriorityQueue<Map.Entry<Integer, Integer>> pq = new PriorityQueue<>(k, Map.Entry.comparingByValue());
+
+        store.entrySet().forEach(entry -> {
+            if (pq.size() < k)
+                // O (N Log(N))
+                pq.add(entry);
+
+            else if (pq.peek() != null && pq.peek().getValue() < entry.getValue()) {
+                pq.remove();
+                // O (N Log(N))
+                pq.add(entry);
+            }
+        });
+
+        int[] result = new int[k];
+        int i = 0;
+        while (!pq.isEmpty())
+            result[i++] = pq.remove().getKey();
+
+        return result;
+    }
+
+    public char findTheDifference(String s, String t) {
+        final Map<Character, Integer> store = new HashMap<>();
+        for(char ch: s.toCharArray()) {
+            store.put(ch, store.getOrDefault(ch, 0) + 1);
+        }
+
+        for(char ch: t.toCharArray()) {
+            Integer count = store.get(ch);
+            if(count == null) return ch;
+            count--;
+            if(count == -1) return ch;
+            store.put(ch, count);
+        }
+
+        return 0;
+    }
+
+    public int[] sortSqueareArray(int[] nums) {
+        int size = nums.length;
+        int left = 0;
+        int right = size -1;
+
+        int[] result = new int[size];
+
+        for(int index = size -1; index >= 0; index--) {
+            if (Math.abs(nums[left]) > nums[right]) {
+                result[index] = nums[left] * nums[left];
+                left++;
+            } else {
+                result[index] = nums[right] * nums[right];
+                right--;
+            }
+        }
+
+        return result;
+    }
+
+    public String checkBalance(String target) {
+        if  (target == null || target.isBlank() || target.length() == 1) return "Not Balanced";
+
+        final ArrayDeque<Character> store = new ArrayDeque<>();
+
+        // complexity = O(N)
+        for (char a: target.toCharArray()) {
+            if (a == '(' || a == '[' || a == '{')
+                store.push(a);
+
+            if (store.isEmpty()) return "Not Balanced";
+
+            switch (a) {
+                case ')':
+                    Character ch = store.poll();
+                    if (ch == '[' || ch == '{') return "Not Balanced";
+                    break;
+                case ']':
+                    Character ch1 = store.poll();
+                    if (ch1 == '(' || ch1 == '{') return "Not Balanced";
+                    break;
+                case '}':
+                    Character ch2 = store.poll();
+                    if (ch2 == '[' || ch2 == '(') return "Not Balanced";
+                    break;
+            }
+        }
+
+        return store.isEmpty() ? "Balanced" : "Not Balanced";
+    }
 
 }
